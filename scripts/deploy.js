@@ -30,7 +30,10 @@ async function main() {
 
   try {
     const DXLABCoin = await hre.ethers.getContractFactory('DXLABCoin');
-    const dxlToken = await DXLABCoin.deploy();
+    const dxlToken = await DXLABCoin.deploy({
+      maxFeePerGas: 500000000000,
+      maxPriorityFeePerGas: 500000000000 
+    });
     const dxlTx = await dxlToken.deploymentTransaction();
     await dxlToken.waitForDeployment();
     const dxlTokenAddress = await dxlToken.getAddress();
