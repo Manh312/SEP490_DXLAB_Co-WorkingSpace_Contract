@@ -34,6 +34,7 @@ contract Booking is Ownable, ReentrancyGuard {
         uint256 price;
         uint256 time;
         bool checkedIn;
+        bool checkedOut;
         bool cancelled;
     }
 
@@ -65,6 +66,8 @@ contract Booking is Ownable, ReentrancyGuard {
     );
 
     event BookingCheckedIn(bytes32 indexed bookingId);
+    event BookingCheckedOut(bytes32 indexed bookingId);
+
     event UserBlocked(address indexed user);
     event UserUnblocked(address indexed user);
     event TokensDeposited(address indexed user, uint256 amount);
@@ -163,6 +166,7 @@ contract Booking is Ownable, ReentrancyGuard {
             price: SLOT_PRICE,
             time: time,
             checkedIn: false,
+            checkedOut: false,
             cancelled: false
         });
 
@@ -230,6 +234,25 @@ contract Booking is Ownable, ReentrancyGuard {
             booking.position,
             refundAmount
         );
+    }
+
+    function checkOut(bytes32 bookingId) external onlyRegistered nonReentrant {
+        Booking storage booking = bookings[bookingId];
+        require(booking.user == msg.sender, "Not the booking owner");
+        require(booking.checkedIn, "User has not checked in");
+        require(!booking.cancelled, "Booking was cancelled");
+        require(!booking.checkedOut, "Already checked out");
+
+        booking.checkedOut = true;
+
+        bytes32 roomSlotId = generateRoomSlotId(
+            booking.roomId,
+            booking.slot,
+            booking.time
+        );
+        roomSlotBooked[roomSlotId] = false;
+
+        emit BookingCheckedOut(bookingId);
     }
 
     function checkIn(bytes32 bookingId) external onlyRegistered {
